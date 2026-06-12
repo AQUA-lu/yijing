@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>玄微子 · 命理八字分析</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0e17;--card:#111827;--border:#1e293b;
+  --gold:#d4a853;--gold-dim:#8b7234;
+  --text:#e2e8f0;--muted:#94a3b8;--accent:#38bdf8;
+  --wood:#22c55e;--fire:#ef4444;--earth:#eab308;--metal:#a1a1aa;--water:#3b82f6;
+}
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6}
+.container{max-width:860px;margin:0 auto;padding:20px}
+
+/* Header */
+.header{text-align:center;padding:40px 0 30px}
+.header h1{font-size:2.2em;color:var(--gold);letter-spacing:6px;margin-bottom:8px;text-shadow:0 0 30px rgba(212,168,83,.3)}
+.header .sub{color:var(--muted);font-size:.95em;letter-spacing:2px}
+.header .divider{width:120px;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:16px auto}
+
+/* Form Card */
+.form-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px;margin-bottom:24px;box-shadow:0 4px 24px rgba(0,0,0,.3)}
+.form-card h2{color:var(--gold);font-size:1.1em;margin-bottom:20px;display:flex;align-items:center;gap:8px}
+.form-card h2::before{content:'☰';font-size:1.2em}
+
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group.full{grid-column:1/-1}
+.form-group label{font-size:.85em;color:var(--muted);font-weight:500}
+.form-group input,.form-group select{background:#1e293b;border:1px solid #334155;border-radius:10px;padding:12px 16px;color:var(--text);font-size:1em;transition:border .2s;outline:none}
+.form-group input:focus,.form-group select:focus{border-color:var(--gold)}
+.form-group select option{background:#1e293b}
+
+.btn-analyze{width:100%;padding:14px;background:linear-gradient(135deg,var(--gold),#b8942e);color:#0a0e17;border:none;border-radius:12px;font-size:1.1em;font-weight:700;cursor:pointer;margin-top:20px;letter-spacing:3px;transition:all .3s}
+.btn-analyze:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(212,168,83,.3)}
+.btn-analyze:active{transform:translateY(0)}
+
+/* Result */
+.result-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px;margin-bottom:24px;box-shadow:0 4px 24px rgba(0,0,0,.3);display:none;animation:fadeIn .6s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+.result-card h2{color:var(--gold);font-size:1.1em;margin-bottom:20px;display:flex;align-items:center;gap:8px}
+
+/* Pillar Grid */
+.pillar-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.pillar{text-align:center;background:#1a2332;border:1px solid var(--border);border-radius:12px;padding:16px 8px;transition:transform .2s}
+.pillar:hover{transform:scale(1.03)}
+.pillar .label{font-size:.75em;color:var(--muted);margin-bottom:8px;letter-spacing:1px}
+.pillar .stem{font-size:1.8em;font-weight:700;margin-bottom:4px}
+.pillar .branch{font-size:1.8em;font-weight:700;margin-bottom:6px}
+.pillar .info{font-size:.7em;color:var(--muted);line-height:1.4}
+
+/* Element Colors */
+.wood{color:var(--wood)}.fire{color:var(--fire)}.earth{color:var(--earth)}.metal{color:var(--metal)}.water{color:var(--water)}
+
+/* Five Elements Bar */
+.elements-bar{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap}
+.element-chip{display:flex;align-items:center;gap:6px;background:#1a2332;border:1px solid var(--border);border-radius:10px;padding:10px 16px;flex:1;min-width:120px}
+.element-chip .icon{font-size:1.4em}
+.element-chip .name{font-size:.85em;color:var(--muted)}
+.element-chip .count{font-size:1.3em;font-weight:700}
+.element-chip .bar{height:4px;border-radius:2px;margin-top:4px;transition:width .6s ease}
+
+/* Analysis Sections */
+.section{margin-bottom:24px}
+.section h3{color:var(--gold);font-size:1em;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.section h3::before{content:'◆';font-size:.6em}
+.section p{color:var(--text);line-height:1.8;font-size:.95em}
+.section ul{list-style:none;padding:0}
+.section li{padding:8px 0;border-bottom:1px solid rgba(30,41,59,.5);display:flex;align-items:flex-start;gap:8px;font-size:.92em}
+.section li::before{content:'▸';color:var(--gold);flex-shrink:0;margin-top:2px}
+.tag{display:inline-block;padding:3px 10px;border-radius:6px;font-size:.8em;margin:2px}
+.tag-wood{background:rgba(34,197,94,.15);color:var(--wood)}
+.tag-fire{background:rgba(239,68,68,.15);color:var(--fire)}
+.tag-earth{background:rgba(234,179,8,.15);color:var(--earth)}
+.tag-metal{background:rgba(161,161,170,.15);color:var(--metal)}
+.tag-water{background:rgba(59,130,246,.15);color:var(--water)}
+
+.advice-box{background:linear-gradient(135deg,rgba(212,168,83,.08),rgba(56,189,248,.05));border:1px solid rgba(212,168,83,.2);border-radius:12px;padding:20px;margin-top:16px}
+.advice-box h4{color:var(--gold);margin-bottom:10px;font-size:.95em}
+.advice-box li{color:var(--text);font-size:.9em}
+
+.disclaimer{text-align:center;color:var(--muted);font-size:.8em;padding:20px 0;border-top:1px solid var(--border);margin-top:20px}
+
+/* Responsive */
+@media(max-width:600px){
+  .form-grid{grid-template-columns:1fr}
+  .pillar-grid{grid-template-columns:repeat(2,1fr)}
+  .elements-bar{flex-direction:column}
+  .header h1{font-size:1.6em}
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>玄微子</h1>
+    <div class="divider"></div>
+    <p class="sub">东方玄学 · 命理八字分析</p>
+  </div>
+
+  <div class="form-card">
+    <h2>请输入出生信息</h2>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>出生年份</label>
+        <select id="year"></select>
+      </div>
+      <div class="form-group">
+        <label>出生月份</label>
+        <select id="month"></select>
+      </div>
+      <div class="form-group">
+        <label>出生日期</label>
+        <select id="day"></select>
+      </div>
+      <div class="form-group">
+        <label>出生时辰</label>
+        <select id="hour">
+          <option value="-1">请选择时辰</option>
+          <option value="0">子时 (23:00-01:00)</option>
+          <option value="1">丑时 (01:00-03:00)</option>
+          <option value="2">寅时 (03:00-05:00)</option>
+          <option value="3">卯时 (05:00-07:00)</option>
+          <option value="4">辰时 (07:00-09:00)</option>
+          <option value="5">巳时 (09:00-11:00)</option>
+          <option value="6">午时 (11:00-13:00)</option>
+          <option value="7">未时 (13:00-15:00)</option>
+          <option value="8">申时 (15:00-17:00)</option>
+          <option value="9">酉时 (17:00-19:00)</option>
+          <option value="10">戌时 (19:00-21:00)</option>
+          <option value="11">亥时 (21:00-23:00)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>性别</label>
+        <select id="gender">
+          <option value="male">男</option>
+          <option value="female">女</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>历法</label>
+        <select id="calendar">
+          <option value="solar">公历（阳历）</option>
+          <option value="lunar">农历（阴历）</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn-analyze" onclick="analyze()">开始排盘分析</button>
+  </div>
+
+  <div class="result-card" id="result">
+    <h2>排盘结果</h2>
+
+    <h3 style="color:var(--gold);font-size:.9em;margin-bottom:12px" id="resultTitle"></h3>
+
+    <div class="pillar-grid" id="pillars"></div>
+
+    <div class="section">
+      <h3>五行分布</h3>
+      <div class="elements-bar" id="elementsBar"></div>
+      <p id="elementAnalysis"></p>
+    </div>
+
+    <div class="section">
+      <h3>日主分析</h3>
+      <p id="dayMasterAnalysis"></p>
+    </div>
+
+    <div class="section">
+      <h3>十神关系</h3>
+      <ul id="tenGods"></ul>
+    </div>
+
+    <div class="section">
+      <h3>性格特质</h3>
+      <p id="personality"></p>
+    </div>
+
+    <div class="section">
+      <h3>事业财运</h3>
+      <p id="career"></p>
+    </div>
+
+    <div class="section">
+      <h3>感情婚姻</h3>
+      <p id="relationship"></p>
+    </div>
+
+    <div class="advice-box">
+      <h4>实用建议</h4>
+      <ul id="advice"></ul>
+    </div>
+
+    <p class="disclaimer">以上分析基于传统命理学理论，仅供参考。<br>人生选择仍需结合实际情况理性判断。</p>
+  </div>
+</div>
+
+<script>
+// === 基础数据 ===
+const TIAN_GAN = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
+const DI_ZHI = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+const WU_XING = ['木','火','土','金','水'];
+const WU_XING_EN = ['wood','fire','earth','metal','water'];
+
+// 天干五行
+const GAN_WUXING = [0,0,1,1,2,2,3,3,4,4]; // 甲乙木丙丁火戊己土庚辛金壬癸水
+// 地支五行
+const ZHI_WUXING = [4,2,0,0,2,1,1,2,3,3,2,4]; // 子水丑土寅木卯木辰土巳火午火未土申金酉金戌土亥水
+
+// 地支藏干
+const ZHI_CANGGAN = [
+  [9],[5,9,7],[0,4,6],[1],[4,1,9],[2,4,6],[3,5],[5,1,3],[6,4,0],[7],[5,7,3],[4,1]
+];
+
+// 十神名称
+const SHISHEN_NAME = ['比肩','劫财','食神','伤官','偏财','正财','七杀','正官','偏印','正印'];
+
+// 计算十神关系
+function getShiShen(dayGan, otherGan) {
+  const dayWX = GAN_WUXING[dayGan];
+  const otherWX = GAN_WUXING[otherGan];
+  const dayYinYang = dayGan % 2; // 0阳1阴
+  const otherYinYang = otherGan % 2;
+
+  if (dayWX === otherWX) return dayYinYang === otherYinYang ? 0 : 1; // 比肩/劫财
+
+  const diff = (otherWX - dayWX + 5) % 5;
+  // 生我: diff=4(印), 我生: diff=1(食伤), 克我: diff=3(官杀), 我克: diff=2(财)
+  const types = {1: [2,3], 2: [4,5], 3: [6,7], 4: [8,9]};
+  const [same, diffType] = types[diff];
+  return dayYinYang === otherYinYang ? diffType : same;
+}
+
+// 获取天干五行class
+function getWXClass(wxIdx) { return WU_XING_EN[wxIdx]; }
+
+// 天干五行图标
+const WU_XING_ICON = ['🌿','🔥','⛰️','🪙','💧'];
+
+// === 核心排盘算法 ===
+
+// 年柱计算（以立春为界，简化处理）
+function getYearPillar(year, month, day) {
+  // 简化：2月4日前算上一年
+  let y = year;
+  if (month < 2 || (month === 2 && day < 4)) y--;
+  const ganIdx = (y - 4) % 10;
+  const zhiIdx = (y - 4) % 12;
+  return [(ganIdx + 10) % 10, (zhiIdx + 12) % 12];
+}
+
+// 月柱计算
+function getMonthPillar(year, month, day) {
+  let y = year;
+  if (month < 2 || (month === 2 && day < 4)) y--;
+
+  // 节气月界（简化）
+  // 月支：寅月(立春)开始
+  const monthZhiBase = 2; // 寅
+  // 实际月支 = (month + 1) % 12 近似，以节气调整
+  // 简化处理：以公历月份对应大致节气
+  let adjustedMonth = month - 2; // 寅月=1月
+  if (day < 4) adjustedMonth--; // 节气前一个月
+  const zhiIdx = ((adjustedMonth % 12) + 12) % 12;
+
+  // 月干由年干推导
+  const yearGan = (y - 4) % 10;
+  // 甲己之年丙作首，乙庚之岁戊为头...
+  const monthGanBase = [2,4,6,8,0]; // 甲己年起丙寅
+  const ganStart = monthGanBase[yearGan % 5];
+  const ganIdx = (ganStart + adjustedMonth + 10) % 10;
+
+  return [(ganIdx + 10) % 10, (zhiIdx + 12) % 12];
+}
+
+// 日柱计算（蔡勒公式变体 + 甲子日推算）
+function getDayPillar(year, month, day) {
+  // 基准日：2000年1月1日 = 甲子日（实际为庚辰日，这里用修正值）
+  // 2000-01-01 干支序 = 16 (庚辰)
+  const baseGZ = 16;
+  const baseDate = new Date(2000, 0, 1);
+  const targetDate = new Date(year, month - 1, day);
+  const diffDays = Math.floor((targetDate - baseDate) / 86400000);
+  const gzIdx = ((diffDays % 60) + baseGZ % 60 + 60) % 60;
+  return [gzIdx % 10, gzIdx % 12];
+}
+
+// 时柱计算
+function getHourPillar(dayGan, hourZhi) {
+  // 日上起时：甲己还加甲，乙庚丙作初...
+  const hourGanBase = [0,2,4,6,8]; // 甲己日起甲子
+  const ganStart = hourGanBase[dayGan % 5];
+  const ganIdx = (ganStart + hourZhi) % 10;
+  return [ganIdx, hourZhi];
+}
+
+// === 五行分析 ===
+function analyzeWuXing(pillars) {
+  const counts = [0,0,0,0,0];
+  // 天干
+  pillars.forEach(([g,z]) => {
+    counts[GAN_WUXING[g]]++;
+    counts[ZHI_WUXING[z]]++;
+    // 藏干加权
+    ZHI_CANGGAN[z].forEach(cg => {
+      counts[GAN_WUXING[cg]] += 0.5;
+    });
+  });
+  return counts;
+}
+
+// 日主强弱判定（简化）
+function judgeDayMasterStrength(dayGan, counts) {
+  const dayWX = GAN_WUXING[dayGan];
+  // 简化：看同类五行数量
+  const selfCount = counts[dayWX];
+  const totalCount = counts.reduce((a,b)=>a+b,0);
+
+  // 同类（比劫+印）数量
+  const yinWX = (dayWX + 4) % 5; // 生我者（印）
+  const selfAndYin = selfCount + counts[yinWX];
+
+  if (selfAndYin >= 4) return '偏强';
+  if (selfAndYin <= 2) return '偏弱';
+  return '中和';
+}
+
+// === 生成分析内容 ===
+
+// 日主性格分析
+const DAY_MASTER_DESC = {
+  0: {name:'甲木',trait:'如参天大树，正直向上，有领导才能。性格刚直不阿，重义气，但有时过于固执。',career:'适合管理、教育、法律、建筑行业',love:'需要包容性强的伴侣，欣赏稳重踏实之人'},
+  1: {name:'乙木',trait:'如花草藤蔓，柔韧灵活，善于适应环境。性格温和细腻，富有同情心，但有时优柔寡断。',career:'适合设计、文学、心理咨询、园艺行业',love:'需要安全感，喜欢被呵护的感觉'},
+  2: {name:'丙火',trait:'如太阳烈焰，热情奔放，光明磊落。性格开朗大方，感染力强，但有时冲动急躁。',career:'适合演艺、传媒、销售、公关行业',love:'热情主动，但需要学会控制情绪'},
+  3: {name:'丁火',trait:'如烛光灯火，温暖细腻，富有内涵。性格含蓄内敛，洞察力强，但有时多虑敏感。',career:'适合研究、医药、文化、创意行业',love:'专一深情，但需要对方的理解和耐心'},
+  4: {name:'戊土',trait:'如高山大地，厚重稳固，值得信赖。性格踏实稳重，包容性强，但有时过于保守。',career:'适合金融、房产、农业、管理行业',love:'忠诚可靠，是家庭的坚实后盾'},
+  5: {name:'己土',trait:'如田园沃土，滋养万物，善于付出。性格温和善良，有服务精神，但有时缺乏主见。',career:'适合服务、教育、医疗、人力资源行业',love:'温柔体贴，善于照顾人'},
+  6: {name:'庚金',trait:'如刀剑矿石，刚毅果断，执行力强。性格直率豪爽，重信守诺，但有时过于强硬。',career:'适合军警、外科、工程、金融行业',love:'需要柔中带刚的伴侣，欣赏有主见之人'},
+  7: {name:'辛金',trait:'如珠宝首饰，精致优雅，审美出众。性格细腻敏感，追求完美，但有时过于挑剔。',career:'适合珠宝、时尚、艺术、精算行业',love:'注重精神契合，需要浪漫和仪式感'},
+  8: {name:'壬水',trait:'如江河大海，智慧深远，变通力强。性格聪明机智，善于谋略，但有时过于圆滑。',career:'适合贸易、物流、IT、咨询行业',love:'需要自由空间，不喜欢被束缚'},
+  9: {name:'癸水',trait:'如雨露甘泉，润物无声，直觉敏锐。性格安静内敛，想象力丰富，但有时多愁善感。',career:'适合心理学、玄学、艺术、科研行业',love:'需要情感上的安全感和精神共鸣'}
+};
+
+// 用神建议
+function getUseGodSuggestion(dayGan, strength) {
+  const wx = GAN_WUXING[dayGan];
+  if (strength === '偏强') {
+    // 需要泄耗克
+    const xieWX = (wx + 1) % 5;
+    const haoWX = (wx + 2) % 5;
+    return {
+      need: [xieWX, haoWX],
+      desc: `日主偏强，宜用${WU_XING[xieWX]}（泄秀）和${WU_XING[haoWX]}（耗身）来平衡。`,
+      colors: `${WU_XING[xieWX]}色、${WU_XING[haoWX]}色`,
+      directions: `利于${getDirection(xieWX)}方和${getDirection(haoWX)}方发展`
+    };
+  } else {
+    // 需要生扶
+    const yinWX = (wx + 4) % 5;
+    return {
+      need: [yinWX, wx],
+      desc: `日主偏弱，宜用${WU_XING[yinWX]}（印星生扶）和${WU_XING[wx]}（比肩帮扶）来增强。`,
+      colors: `${WU_XING[yinWX]}色、${WU_XING[wx]}色`,
+      directions: `利于${getDirection(yinWX)}方和${getDirection(wx)}方发展`
+    };
+  }
+}
+
+function getDirection(wx) {
+  return ['东方','南方','中央','西方','北方'][wx];
+}
+
+// === 主分析函数 ===
+function analyze() {
+  const year = parseInt(document.getElementById('year').value);
+  const month = parseInt(document.getElementById('month').value);
+  const day = parseInt(document.getElementById('day').value);
+  const hourZhi = parseInt(document.getElementById('hour').value);
+  const gender = document.getElementById('gender').value;
+
+  if (year < 0 || month < 0 || day < 0 || hourZhi < 0) {
+    alert('请完整填写出生信息');
+    return;
+  }
+
+  // 排盘
+  const yearP = getYearPillar(year, month, day);
+  const monthP = getMonthPillar(year, month, day);
+  const dayP = getDayPillar(year, month, day);
+  const hourP = getHourPillar(dayP[0], hourZhi);
+  const pillars = [yearP, monthP, dayP, hourP];
+
+  const dayGan = dayP[0];
+  const dayWX = GAN_WUXING[dayGan];
+
+  // 五行分析
+  const wxCounts = analyzeWuXing(pillars);
+  const strength = judgeDayMasterStrength(dayGan, wxCounts);
+  const useGod = getUseGodSuggestion(dayGan, strength);
+
+  // 渲染结果
+  document.getElementById('resultTitle').textContent =
+    `${year}年${month}月${day}日 · ${gender === 'male' ? '乾造（男）' : '坤造（女）'}`;
+
+  // 四柱
+  const labels = ['年柱','月柱','日柱','时柱'];
+  const pillarNames = ['祖上根基','父母宫位','日主本身','子女宫位'];
+  let pillarHTML = '';
+  pillars.forEach(([g,z],i) => {
+    const gx = getWXClass(GAN_WUXING[g]);
+    const zx = getWXClass(ZHI_WUXING[z]);
+    pillarHTML += `
+      <div class="pillar">
+        <div class="label">${labels[i]}</div>
+        <div class="stem ${gx}">${TIAN_GAN[g]}</div>
+        <div class="branch ${zx}">${DI_ZHI[z]}</div>
+        <div class="info">${WU_XING_ICON[GAN_WUXING[g]]} ${WU_XING[GAN_WUXING[g]]}<br>${WU_XING_ICON[ZHI_WUXING[z]]} ${WU_XING[ZHI_WUXING[z]]}</div>
+        <div class="info" style="margin-top:4px;color:var(--gold-dim)">${pillarNames[i]}</div>
+      </div>`;
+  });
+  document.getElementById('pillars').innerHTML = pillarHTML;
+
+  // 五行条
+  const maxCount = Math.max(...wxCounts);
+  let barHTML = '';
+  WU_XING.forEach((name,i) => {
+    const pct = Math.round((wxCounts[i] / maxCount) * 100);
+    barHTML += `
+      <div class="element-chip">
+        <span class="icon">${WU_XING_ICON[i]}</span>
+        <div>
+          <div class="name">${name}</div>
+          <div class="count ${getWXClass(i)}">${wxCounts[i]}</div>
+          <div class="bar" style="width:${pct}%;background:var(--${WU_XING_EN[i]})"></div>
+        </div>
+      </div>`;
+  });
+  document.getElementById('elementsBar').innerHTML = barHTML;
+
+  // 五行分析文字
+  const weakWX = WU_XING.filter((_,i) => wxCounts[i] < 1);
+  const strongWX = WU_XING.filter((_,i) => wxCounts[i] >= 3);
+  let wxText = `八字五行分布：`;
+  WU_XING.forEach((name,i) => { wxText += `${name}(${wxCounts[i]}) `; });
+  wxText += `。`;
+  if (weakWX.length > 0) wxText += `<span class="tag tag-${WU_XING_EN[WU_XING.indexOf(weakWX[0])]}">${weakWX.join('、')}偏弱</span> `;
+  if (strongWX.length > 0) wxText += `<span class="tag tag-${WU_XING_EN[WU_XING.indexOf(strongWX[0])]}">${strongWX.join('、')}偏旺</span> `;
+  wxText += `日主${strength}。`;
+  document.getElementById('elementAnalysis').innerHTML = wxText;
+
+  // 日主分析
+  const dm = DAY_MASTER_DESC[dayGan];
+  document.getElementById('dayMasterAnalysis').innerHTML =
+    `<strong>${dm.name}</strong>日主，${dm.trait}<br><br>
+     <strong>日主${strength}</strong>，${useGod.desc}<br>
+     <span class="tag tag-${getWXClass(useGod.need[0])}">喜用${WU_XING[useGod.need[0]]}</span>
+     <span class="tag tag-${getWXClass(useGod.need[1])}">喜用${WU_XING[useGod.need[1]]}</span>`;
+
+  // 十神
+  let shiShenHTML = '';
+  const pillarsNames = ['年柱','月柱','时柱'];
+  [0,1,3].forEach((pi,i) => {
+    const ss = getShiShen(dayGan, pillars[pi][0]);
+    shiShenHTML += `<li><strong>${pillarsNames[i]}天干</strong> ${TIAN_GAN[pillars[pi][0]]} → <span class="tag tag-${getWXClass(GAN_WUXING[pillars[pi][0]])}">${SHISHEN_NAME[ss]}</span> — ${getShiShenDesc(ss)}</li>`;
+  });
+  document.getElementById('tenGods').innerHTML = shiShenHTML;
+
+  // 性格
+  document.getElementById('personality').innerHTML = dm.trait;
+
+  // 事业
+  document.getElementById('career').innerHTML = `日主${dm.name}，${dm.career}。${useGod.directions}。幸运色系以${useGod.colors}为主。`;
+
+  // 感情
+  document.getElementById('relationship').innerHTML = dm.love;
+
+  // 建议
+  const adviceList = [
+    `${useGod.desc}`,
+    `日常配色可多用${useGod.colors}，有助于提升运势。`,
+    `${useGod.directions}，在选择居住地或办公方位时可参考。`,
+    strength === '偏强' ? '日主偏强，宜收敛锋芒，多倾听他人意见，以柔克刚。' : '日主偏弱，宜多结交贵人，增强自信，借助团队力量发展。',
+    '命理只是参考，最重要的是保持积极心态和持续努力。'
+  ];
+  document.getElementById('advice').innerHTML = adviceList.map(a => `<li>${a}</li>`).join('');
+
+  // 显示结果
+  const result = document.getElementById('result');
+  result.style.display = 'block';
+  result.scrollIntoView({ behavior: 'smooth' });
+}
+
+function getShiShenDesc(ss) {
+  const descs = [
+    '自我意识强，独立自主，竞争心旺盛',
+    '朋友缘好，但需防破财，善于合作',
+    '才华横溢，表达能力强，适合创意工作',
+    '聪明叛逆，创造力强，但易得罪人',
+    '偏财运佳，善于投资理财，异性缘好',
+    '正财运稳定，勤劳务实，理财有道',
+    '事业心强，有魄力，但压力较大',
+    '正直守规矩，有管理才能，责任感强',
+    '思维独特，偏门学问，但性格孤僻',
+    '贵人运好，学业有成，得长辈庇护'
+  ];
+  return descs[ss] || '';
+}
+
+// === 初始化表单 ===
+(function init() {
+  const yearSel = document.getElementById('year');
+  const monthSel = document.getElementById('month');
+  const daySel = document.getElementById('day');
+
+  let opt = '<option value="-1">请选择年份</option>';
+  for (let y = 2026; y >= 1940; y--) opt += `<option value="${y}">${y}年</option>`;
+  yearSel.innerHTML = opt;
+
+  opt = '<option value="-1">请选择月份</option>';
+  for (let m = 1; m <= 12; m++) opt += `<option value="${m}">${m}月</option>`;
+  monthSel.innerHTML = opt;
+
+  opt = '<option value="-1">请选择日期</option>';
+  for (let d = 1; d <= 31; d++) opt += `<option value="${d}">${d}日</option>`;
+  daySel.innerHTML = opt;
+})();
+</script>
+</body>
+</html>
